@@ -17,7 +17,7 @@ nbconvert==5.6.1
 nbformat==5.0.6
 packaging==20.3
 pandocfilters==1.4.2
-pkg-resources==0.0.0
+Pillow==7.1.2
 pycairo==1.19.1
 Pygments==2.6.1
 PyGObject==3.36.0
