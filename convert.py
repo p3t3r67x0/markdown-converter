@@ -6,6 +6,7 @@ import re
 import math
 import cairo
 import pathlib
+import argparse
 import requests
 import pypandoc
 
@@ -98,21 +99,40 @@ def convert_image(p, o):
     return dimensions
 
 
-def main():
-    makedir(file_path('/output'))
-    makedir(file_path('/assets'))
+def argparser():
+    parser = argparse.ArgumentParser(description='Process a markdown file.')
 
-    latex_body = pypandoc.convert_file('README.md', 'latex', format='md')
+    parser.add_argument('--input', dest='input', help='sum the integers')
+
+    args = parser.parse_args()
+
+    return args
+
+
+def convert_file(i):
+    latex_body = pypandoc.convert_file(i, 'latex', format='md')
     latex_header = readfile('header.tex')
     latex_doc = '{document}'
 
-    latex = '{0}\n\\begin{2}{1}\n\\end{2}'.format(
+    latex = '{0}\n\\begin{2}\n\n{1}\n\\end{2}'.format(
         latex_header, latex_body, latex_doc
     )
 
+    return latex
+
+
+def main():
+    args = argparser()
+
+    makedir(file_path('/output'))
+    makedir(file_path('/assets'))
+
+    latex = convert_file(args.input)
+
     verbatim_pattern = re.compile(r'\\begin{Verbatim}')
     url_pattern = re.compile(
-        r'\\(includegraphics){(http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\), ]| \
+        r'\\(includegraphics){(http[s]?:// \
+        (?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\), ]| \
         (?:%[0-9a-fA-F][0-9a-fA-F]))+)}')
 
     verbatim_replace = r'\\begin{Verbatim}[breaklines=true]'
