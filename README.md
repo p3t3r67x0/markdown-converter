@@ -8,6 +8,5 @@
 E.g. on Debian or Ubuntu:
 
 ```bash
-sudo apt-get install pandoc
-sudo apt-get install texlive-xetex texlive-fonts-recommended texlive-generic-recommended
+sudo apt install pandoc texlive-full gir1.2-rsvg-2.0 libcairo2-dev libgirepository1.0-dev python3-cairo python-gi-cairo python3-gi
 ```
