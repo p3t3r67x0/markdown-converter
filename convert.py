@@ -58,6 +58,10 @@ def workingdir():
     return dir
 
 
+def makedir(p):
+    pathlib.Path(p).mkdir(parents=True, exist_ok=True)
+
+
 def filename(p):
     name = os.path.basename(p).split('.')[0]
 
@@ -95,6 +99,9 @@ def convert_image(p, o):
 
 
 def main():
+    makedir(file_path('/output'))
+    makedir(file_path('/assets'))
+
     latex_body = pypandoc.convert_file('README.md', 'latex', format='md')
     latex_header = readfile('header.tex')
     latex_doc = '{document}'
