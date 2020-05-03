@@ -9,8 +9,9 @@ import pathlib
 import argparse
 import requests
 import pypandoc
+import subprocess
 
-from urllib.parse import urlparse
+from urllib.parse import urlparse, unquote
 from requests.exceptions import HTTPError
 from gi.repository.GLib import Error
 
@@ -24,7 +25,7 @@ def readfile(p):
         return f.read()
 
 
-def writefile(p, t, i):
+def write_file(p, t, i):
     with open(p, t) as f:
         f.write(i)
 
@@ -63,8 +64,14 @@ def makedir(p):
     pathlib.Path(p).mkdir(parents=True, exist_ok=True)
 
 
-def filename(p):
-    name = os.path.basename(p).split('.')[0]
+def file_name(p):
+    name = os.path.splitext(os.path.basename(p))[0]
+
+    return name
+
+
+def file_extension(p):
+    name = os.path.splitext(os.path.basename(p))[1]
 
     return name
 
@@ -102,14 +109,17 @@ def convert_image(p, o):
 def argparser():
     parser = argparse.ArgumentParser(description='Process a markdown file.')
 
-    parser.add_argument('--input', dest='input', help='sum the integers')
+    parser.add_argument('--input', dest='input',
+                        required=True, help='define input file')
+    parser.add_argument('--output', dest='output',
+                        required=True, help='define output file_name')
 
     args = parser.parse_args()
 
     return args
 
 
-def convert_file(i):
+def convert_markdown(i):
     latex_body = pypandoc.convert_file(i, 'latex', format='md')
     latex_header = readfile('header.tex')
     latex_doc = '{document}'
@@ -121,58 +131,91 @@ def convert_file(i):
     return latex
 
 
+def replace_verbatim(document):
+    verbatim_pattern = re.compile(r'\\begin{Verbatim}')
+    verbatim_replace = r'\\begin{Verbatim}[breaklines=true]'
+    latex = re.sub(verbatim_pattern, verbatim_replace, document)
+
+    return latex
+
+
+def find_all_images(latex):
+    img_url_pattern = re.compile(
+        r'\\(includegraphics){([a-zA-Z0-9$-_@.&+!*\(\), ]+)}')
+
+    images = re.findall(img_url_pattern, latex)
+
+    return images
+
+
+def extract_image_path(raw_image_url, latex):
+    image_url = re.sub(r'[\s\t \\]', '_', raw_image_url)
+    image_file = urlparse(image_url).path
+    image_source_path = file_path('/assets/{}{}'.format(
+        file_name(image_file), file_extension(image_file)))
+
+    latex = latex.replace(
+        image_url, './assets/{}.png'.format(file_name(image_source_path)))
+
+    return (latex, image_source_path)
+
+
+def iterate_images(images, latex, target):
+    for image in images:
+        raw_image_url = unquote(image[1])
+
+        # TODO: need to prepend base url
+        if not raw_image_url.startswith('http'):
+            raw_image_url = raw_image_url
+
+        resource = download(raw_image_url)
+        latex, image_source_path = extract_image_path(raw_image_url, latex)
+        print(image_source_path)
+
+        image_target_path = file_path('/assets/{}.png'.format(
+            file_name(image_source_path)))
+        print(image_target_path)
+
+        if resource:
+            write_file(image_source_path, 'wb', resource)
+
+        dimensions = convert_image(image_source_path, image_target_path)
+
+        img_pattern = re.compile(
+            r'\\(includegraphics{0})'.format(image_target_path))
+
+        if dimensions:
+            img_replace = r'\\includegraphics[width={0}mm, height={1}mm]{2}'.format(
+                pixeltomm(dimensions[0]), pixeltomm(dimensions[1]), image_target_path)
+        else:
+            img_replace = r'\\includegraphics[width=\\textwidth]{0}'.format(
+                image_target_path)
+
+        latex = re.sub(img_pattern, img_replace, latex)
+
+        print(dimensions)
+
+    write_file(file_path('/output/{}.tex'.format(target)), 'w', latex)
+
+
+def convert_latex(target):
+    subprocess.call('xelatex -interaction nonstopmode -output-directory {} {}'.format(
+        file_path('/output'), file_path('/output/{}.tex'.format(target))),
+        shell=True)
+
+
 def main():
     args = argparser()
 
     makedir(file_path('/output'))
     makedir(file_path('/assets'))
 
-    latex = convert_file(args.input)
+    latex = convert_markdown(args.input)
+    latex = replace_verbatim(latex)
+    images = find_all_images(latex)
 
-    verbatim_pattern = re.compile(r'\\begin{Verbatim}')
-    url_pattern = re.compile(
-        r'\\(includegraphics){(http[s]?:// \
-        (?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\), ]| \
-        (?:%[0-9a-fA-F][0-9a-fA-F]))+)}')
-
-    verbatim_replace = r'\\begin{Verbatim}[breaklines=true]'
-    latex = re.sub(verbatim_pattern, verbatim_replace, latex)
-
-    urls = re.findall(url_pattern, latex)
-
-    for url in urls:
-        parsed = urlparse(url[1])
-        path = parsed.path
-        file = os.path.basename(path)
-        latex = latex.replace(url[1], './assets/{}.png'.format(filename(file)))
-
-        if not fileexists('{}/assets/{}'.format(workingdir(), file)):
-            file_path_str = file_path('/assets/{}'.format(file))
-
-            resource = download(url[1])
-
-            if not resource:
-                continue
-
-            writefile(file_path_str, 'wb', resource)
-
-            outputpath = '{}/assets/{}.png'.format(workingdir(), filename(file))
-            dimensions = convert_image(file_path_str, outputpath)
-
-            outputfile = '{{./assets/{}.png}}'.format(filename(file))
-            img_pattern = re.compile(r'\\(includegraphics{0})'.format(outputfile))
-
-            if dimensions:
-                img_replace = r'\\includegraphics[width={0}mm, height={1}mm]{2}'.format(
-                    pixeltomm(dimensions[0]), pixeltomm(dimensions[1]), outputfile)
-            else:
-                img_replace = r'\\includegraphics[width=\\textwidth]{0}'.format(outputfile)
-
-            latex = re.sub(img_pattern, img_replace, latex)
-
-            print(dimensions)
-
-    writefile(file_path('/output/markdown.tex'), 'w', latex)
+    iterate_images(images, latex, args.output)
+    convert_latex(args.output)
 
 
 if __name__ == '__main__':
