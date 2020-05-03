@@ -126,14 +126,16 @@ def argparser():
                         required=True, help='define input file')
     parser.add_argument('--output', dest='output',
                         required=True, help='define output file_name')
+    parser.add_argument('--format', dest='format',
+                        required=True, help='define input format')
 
     args = parser.parse_args()
 
     return args
 
 
-def convert_markdown(i):
-    latex_body = pypandoc.convert_file(i, 'latex', format='md')
+def convert_markdown(i, f):
+    latex_body = pypandoc.convert_file(i, 'latex', format=f)
     latex_header = readfile('header.tex')
     latex_doc = '{document}'
 
@@ -244,12 +246,11 @@ def iterate_images(images, latex, target):
 
         latex = latex.replace(image_url, image_path)
 
-
         img_pattern = re.compile(
             r'\\(includegraphics{})'.format(image_relative_string))
 
         if dimensions and check_convert_pixel(dimensions):
-            print(dimensions)
+            print('dimensions', dimensions)
 
             img_replace = r'\\includegraphics[width={0}mm, height={1}mm]{2}'.format(
                 pixeltomm(dimensions[0]),
@@ -258,7 +259,6 @@ def iterate_images(images, latex, target):
         else:
             img_replace = r'\\includegraphics[width=0.95\\textwidth]{}'.format(
                 image_relative_string)
-            print(img_replace)
 
         latex = re.sub(img_pattern, img_replace, latex)
 
@@ -277,7 +277,7 @@ def main():
     makedir(file_path('/output'))
     makedir(file_path('/assets'))
 
-    latex = convert_markdown(args.input)
+    latex = convert_markdown(args.input, args.format)
     latex = replace_verbatim(latex)
     images = find_all_images(latex)
 
