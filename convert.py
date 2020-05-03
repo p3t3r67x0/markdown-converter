@@ -11,6 +11,7 @@ import requests
 import pypandoc
 import subprocess
 
+from PIL import Image
 from urllib.parse import urlparse, unquote
 from requests.exceptions import HTTPError
 from gi.repository.GLib import Error
@@ -49,6 +50,7 @@ def fileexists(p):
 
 
 def pixeltomm(p):
+    print(type(p))
     value = math.floor(p * 25.4) / 96
 
     return value
@@ -83,7 +85,18 @@ def file_path(p):
     return path
 
 
-def convert_image(p, o):
+def convert_gif_image(p, o):
+    image = Image.open(p)
+    image.save(o)
+
+    image = Image.open(o)
+    width, height = image.size
+    dimensions = [width, height]
+
+    return dimensions
+
+
+def convert_svg_image(p, o):
     handle = Rsvg.Handle()
 
     try:
@@ -148,16 +161,58 @@ def find_all_images(latex):
     return images
 
 
-def extract_image_path(raw_image_url, latex):
+def extract_image_path(raw_image_url):
     image_url = re.sub(r'[\s\t \\]', '_', raw_image_url)
     image_file = urlparse(image_url).path
     image_source_path = file_path('/assets/{}{}'.format(
         file_name(image_file), file_extension(image_file)))
 
-    latex = latex.replace(
-        image_url, './assets/{}.png'.format(file_name(image_source_path)))
+    return image_url, image_source_path
 
-    return (latex, image_source_path)
+
+def image_relative_path(image_source_path, image_target_path):
+    if file_extension(image_source_path) != '.gif' and file_extension(image_source_path) != '.svg':  # noqa: E501
+        image_relative_path = './assets/{}{}'.format(
+            file_name(image_source_path),
+            file_extension(image_source_path))
+
+        image_relative_string = '{{./assets/{}{}}}'.format(
+            file_name(image_target_path),
+            file_extension(image_target_path))
+    else:
+        image_relative_path = './assets/{}.png'.format(
+            file_name(image_target_path))
+
+        image_relative_string = '{{./assets/{}.png}}'.format(
+            file_name(image_target_path))
+
+    return image_relative_path, image_relative_string
+
+
+def check_convert_image(image_source_path, image_target_path):
+    dimensions = None
+
+    image_target_path = file_path('/assets/{}.png'.format(
+        file_name(image_target_path)))
+
+    if file_extension(image_source_path) == '.svg':
+        dimensions = convert_svg_image(
+            image_source_path, image_target_path)
+
+    elif file_extension(image_source_path) == '.gif':
+        dimensions = convert_gif_image(
+            image_source_path, image_target_path)
+
+    return dimensions
+
+
+def check_convert_pixel(dimensions):
+    width = pixeltomm(dimensions[0])
+
+    if width <= 170:
+        return True
+
+    return False
 
 
 def iterate_images(images, latex, target):
@@ -169,31 +224,43 @@ def iterate_images(images, latex, target):
             raw_image_url = raw_image_url
 
         resource = download(raw_image_url)
-        latex, image_source_path = extract_image_path(raw_image_url, latex)
+
+        image_url, image_source_path = extract_image_path(raw_image_url)
         print(image_source_path)
 
-        image_target_path = file_path('/assets/{}.png'.format(
-            file_name(image_source_path)))
+        image_target_path = file_path('/assets/{}{}'.format(
+            file_name(image_source_path),
+            file_extension(image_source_path)))
         print(image_target_path)
 
         if resource:
             write_file(image_source_path, 'wb', resource)
 
-        dimensions = convert_image(image_source_path, image_target_path)
+        dimensions = check_convert_image(image_source_path, image_target_path)
+        image_path, image_relative_string = image_relative_path(
+            image_source_path, image_target_path)
+        print('image_path', image_path)
+        print('image_relative_string', image_relative_string)
+
+        latex = latex.replace(image_url, image_path)
+
 
         img_pattern = re.compile(
-            r'\\(includegraphics{0})'.format(image_target_path))
+            r'\\(includegraphics{})'.format(image_relative_string))
 
-        if dimensions:
+        if dimensions and check_convert_pixel(dimensions):
+            print(dimensions)
+
             img_replace = r'\\includegraphics[width={0}mm, height={1}mm]{2}'.format(
-                pixeltomm(dimensions[0]), pixeltomm(dimensions[1]), image_target_path)
+                pixeltomm(dimensions[0]),
+                pixeltomm(dimensions[1]),
+                image_relative_string)
         else:
-            img_replace = r'\\includegraphics[width=\\textwidth]{0}'.format(
-                image_target_path)
+            img_replace = r'\\includegraphics[width=0.95\\textwidth]{}'.format(
+                image_relative_string)
+            print(img_replace)
 
         latex = re.sub(img_pattern, img_replace, latex)
-
-        print(dimensions)
 
     write_file(file_path('/output/{}.tex'.format(target)), 'w', latex)
 
