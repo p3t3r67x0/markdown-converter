@@ -35,10 +35,12 @@
 \usepackage{times}
 
 \usepackage{microtype}
+\usepackage{enumitem}
 
 \usepackage[normalem]{ulem}
 \usepackage[strings]{underscore}
 \usepackage[default,scale=0.9]{opensans}
+\usepackage[absolute]{textpos}
 
 \ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0
  \usepackage[utf8]{inputenc}
@@ -116,6 +118,12 @@
 \titleformat*{\paragraph}{\large\bfseries}
 \titleformat*{\subparagraph}{\large\bfseries}
 
+\titlespacing*{\section} {0pt}{2em}{0.2em}
+\titlespacing*{\subsection} {0pt}{1.9em}{0.2em}
+\titlespacing*{\subsubsection} {0pt}{1.8em}{0.2em}
+\titlespacing*{\paragraph} {0pt}{1.6em}{0.2em}
+\titlespacing*{\subparagraph} {0pt}{1.4em}{0.2em}
+
 \renewcommand\sectionmark[1]{\markboth{#1}{}}
 
 \setcounter{secnumdepth}{0}
@@ -134,7 +142,7 @@
 \newcommand{\CharTok}[1]{\color{darkjunglegreen}{{#1}}}
 \newcommand{\ImportTok}[1]{\color{darkjunglegreen}{{#1}}}
 \newcommand{\BuiltInTok}[1]{\color{hollywoodcerise}{{#1}}}
-\newcommand{\CommentTok}[1]{\color{spirodiscoball}{\textit{{#1}}}}
+\newcommand{\CommentTok}[1]{\color{darkelectricblue}{\textit{{#1}}}}
 \newcommand{\OtherTok}[1]{\color{hollywoodcerise}{{#1}}}
 \newcommand{\AlertTok}[1]{\color{hollywoodcerise}{\textbf{{#1}}}}
 \newcommand{\FunctionTok}[1]{\color{azure}{{#1}}}
@@ -148,7 +156,7 @@
 \newcommand{\InformationTok}[1]{\color{bittersweet}{{#1}}}
 \newcommand{\AttributeTok}[1]{\color{mediumtealblue}{{#1}}}
 \newcommand{\ControlFlowTok}[1]{\color{darkjunglegreen}{{#1}}}
-\newcommand{\ExtensionTok}[1]{\color{darkelectricblue}{{#1}}}
+\newcommand{\ExtensionTok}[1]{\color{spirodiscoball}{{#1}}}
 \newcommand{\NormalTok}[1]{\color{americanrose}{{#1}}}
 \newcommand{\StringTok}[1]{\color{azure}{{#1}}}
 
@@ -176,10 +184,23 @@
 \let\oldtexttt\texttt
 \renewcommand{\texttt}[1]{\sethlcolor{platinum}\color{darkjunglegreen}\oldtexttt{\hl{#1}}}
 
-\AtBeginEnvironment{quote}{\singlespace\vspace{\topsep}\small}
-\AtEndEnvironment{quote}{\vspace{\topsep}\endsinglespace}
+\lstnewenvironment{verbquote}[1][]
+{\lstset{columns=fullflexible,
+  identifierstyle=\large\color{darkjunglegreen},
+  breakatwhitespace=false,
+  xleftmargin=0pt,
+  xrightmargin=0pt,
+  breakindent=0pt,
+  aboveskip=0.5em,
+  belowskip=2em,
+  breaklines,
+  #1}}{}
 
 \providecommand{\tightlist}{%
- \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+ \setlength{\itemsep}{4pt}\setlength{\parskip}{0pt}}
+
+\setlength{\parindent}{0pt}
+
+\setlist[itemize]{leftmargin=0.15in}
 
 \date{}
