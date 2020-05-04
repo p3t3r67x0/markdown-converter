@@ -50,7 +50,6 @@ def fileexists(p):
 
 
 def pixeltomm(p):
-    print(type(p))
     value = math.floor(p * 25.4) / 96
 
     return value
@@ -83,6 +82,15 @@ def file_path(p):
     path = os.path.join(dir, *p.split('/'))
 
     return path
+
+
+def image_dimensions(p):
+    image = Image.open(p)
+
+    width, height = image.size
+    dimensions = [width, height]
+
+    return dimensions
 
 
 def convert_gif_image(p, o):
@@ -249,12 +257,15 @@ def iterate_images(images, latex, target):
         img_pattern = re.compile(
             r'\\(includegraphics{})'.format(image_relative_string))
 
-        if dimensions and check_convert_pixel(dimensions):
-            print('dimensions', dimensions)
+        if not dimensions:
+            dimensions = image_dimensions(image_path)
 
+        print('dimensions', dimensions)
+
+        # when image width less or equal 170
+        if check_convert_pixel(dimensions):
             img_replace = r'\\includegraphics[width={0}mm, height={1}mm]{2}'.format(
-                pixeltomm(dimensions[0]),
-                pixeltomm(dimensions[1]),
+                pixeltomm(dimensions[0]), pixeltomm(dimensions[1]),
                 image_relative_string)
         else:
             img_replace = r'\\includegraphics[width=0.95\\textwidth]{}'.format(
