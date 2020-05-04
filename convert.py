@@ -8,10 +8,11 @@ import cairo
 import pathlib
 import argparse
 import requests
-import pypandoc
 import subprocess
+import pypandoc
+import uuid
 
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from urllib.parse import urlparse, unquote
 from requests.exceptions import HTTPError
 from gi.repository.GLib import Error
@@ -42,7 +43,7 @@ def download(p):
     return res.content
 
 
-def fileexists(p):
+def file_exists(p):
     if os.path.isfile(p):
         return True
 
@@ -84,8 +85,22 @@ def file_path(p):
     return path
 
 
+def image_open(p):
+    try:
+        image = Image.open(p)
+    except FileNotFoundError:
+        return None
+    except UnidentifiedImageError:
+        return None
+
+    return image
+
+
 def image_dimensions(p):
-    image = Image.open(p)
+    image = image_open(p)
+
+    if not image:
+        return None
 
     width, height = image.size
     dimensions = [width, height]
@@ -94,10 +109,18 @@ def image_dimensions(p):
 
 
 def convert_gif_image(p, o):
-    image = Image.open(p)
+    image = image_open(p)
+
+    if not image:
+        return None
+
     image.save(o)
 
-    image = Image.open(o)
+    image = image_open(o)
+
+    if not image:
+        return None
+
     width, height = image.size
     dimensions = [width, height]
 
@@ -185,12 +208,12 @@ def find_all_images(latex):
 
 
 def extract_image_path(raw_image_url):
-    image_url = re.sub(r'[\s\t \\]', '_', raw_image_url)
-    image_file = urlparse(image_url).path
-    image_source_path = file_path('/assets/{}{}'.format(
-        file_name(image_file), file_extension(image_file)))
+    image_file = urlparse(raw_image_url).path
 
-    return image_url, image_source_path
+    image_source_path = file_path('/assets/{}{}'.format(
+        str(uuid.uuid4()), file_extension(image_file)))
+
+    return image_source_path
 
 
 def image_relative_path(image_source_path, image_target_path):
@@ -238,23 +261,24 @@ def check_convert_pixel(dimensions):
     return False
 
 
-def iterate_images(images, latex, target):
+def iterate_images(images, latex):
     for image in images:
         raw_image_url = unquote(image[1])
+        print('raw_image_url', raw_image_url)
 
         # TODO: need to prepend base url
         if not raw_image_url.startswith('http'):
             raw_image_url = raw_image_url
 
-        resource = download(raw_image_url)
-
-        image_url, image_source_path = extract_image_path(raw_image_url)
-        print(image_source_path)
+        image_source_path = extract_image_path(raw_image_url)
+        print('image_source_path', image_source_path)
 
         image_target_path = file_path('/assets/{}{}'.format(
             file_name(image_source_path),
             file_extension(image_source_path)))
-        print(image_target_path)
+        print('image_target_path', image_target_path)
+
+        resource = download(raw_image_url)
 
         if resource:
             write_file(image_source_path, 'wb', resource)
@@ -265,7 +289,7 @@ def iterate_images(images, latex, target):
         print('image_path', image_path)
         print('image_relative_string', image_relative_string)
 
-        latex = latex.replace(image_url, image_path)
+        latex = latex.replace(raw_image_url, image_path)
 
         img_pattern = re.compile(
             r'\\(includegraphics{})'.format(image_relative_string))
@@ -276,7 +300,7 @@ def iterate_images(images, latex, target):
         print('dimensions', dimensions)
 
         # when image width less or equal 170
-        if check_convert_pixel(dimensions):
+        if dimensions and check_convert_pixel(dimensions):
             img_replace = r'\\includegraphics[width={0}mm, height={1}mm]{2}'.format(
                 pixeltomm(dimensions[0]), pixeltomm(dimensions[1]),
                 image_relative_string)
@@ -285,8 +309,9 @@ def iterate_images(images, latex, target):
                 image_relative_string)
 
         latex = re.sub(img_pattern, img_replace, latex)
+        print('\n')
 
-    write_file(file_path('/output/{}.tex'.format(target)), 'w', latex)
+    return latex
 
 
 def convert_latex(target):
@@ -306,7 +331,8 @@ def main():
     latex = replace_verbatim(latex)
     images = find_all_images(latex)
 
-    iterate_images(images, latex, args.output)
+    latex = iterate_images(images, latex)
+    write_file(file_path('/output/{}.tex'.format(args.output)), 'w', latex)
     convert_latex(args.output)
 
 
