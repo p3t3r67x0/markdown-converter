@@ -186,6 +186,14 @@ def convert_markdown(i, f):
     return latex
 
 
+def replace_rule(document):
+    rule_pattern = re.compile(r'\\rule\{0.5\\linewidth\}')
+    rule_replace = r'\\par\\noindent\\rule{\\textwidth}'
+    latex = re.sub(rule_pattern, rule_replace, document)
+
+    return latex
+
+
 def replace_verbatim(document):
     verbatim_pattern = re.compile(r'\\begin{Verbatim}')
     verbatim_replace = r'\\begin{Verbatim}[breaklines=true]'
@@ -344,6 +352,7 @@ def main():
         write_file(source, 'w', html)
 
     latex = convert_markdown(source, format)
+    latex = replace_rule(latex)
     latex = replace_quote(latex)
     latex = replace_verbatim(latex)
     images = find_all_images(latex)
