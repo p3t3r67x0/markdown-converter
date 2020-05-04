@@ -165,7 +165,16 @@ def argparser():
     return args
 
 
+def convert_html(i, f):
+    html = pypandoc.convert_file(i, 'html', format=f)
+
+    return html
+
+
 def convert_markdown(i, f):
+    if f == 'gfm':
+        f = 'html'
+
     latex_body = pypandoc.convert_file(i, 'latex', format=f)
     latex_header = readfile('header.tex')
     latex_doc = '{document}'
@@ -323,10 +332,18 @@ def convert_latex(target):
 def main():
     args = argparser()
 
+    source = args.input
+    format = args.format
+
     makedir(file_path('/output'))
     makedir(file_path('/assets'))
 
-    latex = convert_markdown(args.input, args.format)
+    if args.format == 'gfm':
+        html = convert_html(source, format)
+        source = file_path('/output/{}.html'.format(args.output))
+        write_file(source, 'w', html)
+
+    latex = convert_markdown(source, format)
     latex = replace_quote(latex)
     latex = replace_verbatim(latex)
     images = find_all_images(latex)
