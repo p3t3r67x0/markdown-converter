@@ -35,5 +35,5 @@ docker run --rm -it --entrypoint /bin/bash markdown
 ## Example
 
 ```bash
-./convert.py --input https://github.com/p3t3r67x0/markdown-converter/blob/master/README.md --format md --output readme
+./convert.py --input https://raw.githubusercontent.com/p3t3r67x0/markdown-converter/master/README.md --format md --output readme
 ```
