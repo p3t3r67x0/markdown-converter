@@ -35,12 +35,10 @@
 \usepackage{times}
 
 \usepackage{microtype}
-\usepackage{enumitem}
 
 \usepackage[normalem]{ulem}
 \usepackage[strings]{underscore}
 \usepackage[default,scale=0.9]{opensans}
-\usepackage[absolute]{textpos}
 
 \ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0
  \usepackage[utf8]{inputenc}
@@ -118,7 +116,7 @@
 \titleformat*{\paragraph}{\large\bfseries}
 \titleformat*{\subparagraph}{\large\bfseries}
 
-\titlespacing*{\section} {0pt}{2em}{0.2em}
+\titlespacing*{\section} {0pt}{2em}{1.5em}
 \titlespacing*{\subsection} {0pt}{1.9em}{0.2em}
 \titlespacing*{\subsubsection} {0pt}{1.8em}{0.2em}
 \titlespacing*{\paragraph} {0pt}{1.6em}{0.2em}
@@ -173,28 +171,15 @@
 }
 \ExplSyntaxOff
 
-\newcommand{\codeinline}[1]{{%
-   \sethlcolor{platinum}%
-   \color{darkjunglegreen}%
-   \ttfamily
-   \seqsplit
-   \hl{#1}%
-  }}
-
 \let\oldtexttt\texttt
 \renewcommand{\texttt}[1]{\sethlcolor{platinum}\color{darkjunglegreen}\oldtexttt{\hl{#1}}}
 
-\lstnewenvironment{verbquote}[1][]
-{\lstset{columns=fullflexible,
-  identifierstyle=\large\color{darkjunglegreen},
-  breakatwhitespace=false,
-  xleftmargin=0pt,
-  xrightmargin=0pt,
-  breakindent=0pt,
-  aboveskip=0.5em,
-  belowskip=2em,
-  breaklines,
-  #1}}{}
+\usepackage{enumitem}
+\setlist{leftmargin=*,parsep=0pt,itemsep=2pt,topsep=2pt,partopsep=0pt}
+\setlist[enumerate]{widest=0}
+
+\usepackage[leftmargin=0pt,vskip=1.5em,font=ttfamily]{quoting}
+\AtBeginEnvironment{quoting}{\large}
 
 \providecommand{\tightlist}{%
  \setlength{\itemsep}{4pt}\setlength{\parskip}{0pt}}

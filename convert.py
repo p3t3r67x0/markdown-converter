@@ -162,6 +162,19 @@ def replace_verbatim(document):
     return latex
 
 
+def replace_quote(document):
+    quote_begin_replace = r'\\begin{quoting}'
+    quote_end_replace = r'\\end{quoting}'
+
+    quote_begin_pattern = re.compile(r'\\begin\{quote\}')
+    quote_end_pattern = re.compile(r'\\end\{quote\}')
+
+    latex = re.sub(quote_begin_pattern, quote_begin_replace, document)
+    latex = re.sub(quote_end_pattern, quote_end_replace, latex)
+
+    return latex
+
+
 def find_all_images(latex):
     img_url_pattern = re.compile(
         r'\\(includegraphics){([a-zA-Z0-9$-_@.&+!*\(\), ]+)}')
@@ -289,6 +302,7 @@ def main():
     makedir(file_path('/assets'))
 
     latex = convert_markdown(args.input, args.format)
+    latex = replace_quote(latex)
     latex = replace_verbatim(latex)
     images = find_all_images(latex)
 
