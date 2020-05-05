@@ -12,9 +12,10 @@ import subprocess
 import pypandoc
 import uuid
 
+from magic import from_file
 from PIL import Image, UnidentifiedImageError
+from requests.exceptions import ConnectionError, HTTPError
 from urllib.parse import urlparse, unquote
-from requests.exceptions import HTTPError
 from gi.repository.GLib import Error
 
 gi.require_version('Rsvg', '2.0')
@@ -37,7 +38,11 @@ def download(p):
 
     try:
         res.raise_for_status()
-    except HTTPError:
+    except HTTPError as e:
+        print(e)
+        return None
+    except ConnectionError as e:
+        print(e)
         return None
 
     return res.content
@@ -51,7 +56,7 @@ def file_exists(p):
 
 
 def pixeltomm(p):
-    value = math.floor(p * 25.4) / 96
+    value = math.floor(p * 25.4) / 112
 
     return value
 
@@ -83,6 +88,12 @@ def file_path(p):
     path = os.path.join(dir, *p.split('/'))
 
     return path
+
+
+def file_type(p):
+    type = from_file(p, mime=True)
+
+    return type
 
 
 def image_open(p):
@@ -132,20 +143,21 @@ def convert_svg_image(p, o):
 
     try:
         svg = handle.new_from_file(p)
-    except Error:
-        return
+    except Error as e:
+        print(e)
+        return None
 
-    unscaled_width = svg.props.width
-    unscaled_height = svg.props.height
+    width = svg.props.width
+    height = svg.props.height
 
-    svg_surface = cairo.SVGSurface(None, unscaled_width, unscaled_height)
+    svg_surface = cairo.SVGSurface(None, width, height)
     svg_context = cairo.Context(svg_surface)
     svg_context.save()
     svg.render_cairo(svg_context)
     svg_context.restore()
     svg_surface.write_to_png(o)
 
-    dimensions = [unscaled_width, unscaled_height]
+    dimensions = [width, height]
 
     return dimensions
 
@@ -153,6 +165,8 @@ def convert_svg_image(p, o):
 def argparser():
     parser = argparse.ArgumentParser(description='Process a markdown file.')
 
+    parser.add_argument('--dry', action='store_true',
+                        required=False, help='set flag for dry run')
     parser.add_argument('--input', dest='input',
                         required=True, help='define input file')
     parser.add_argument('--output', dest='output',
@@ -165,15 +179,17 @@ def argparser():
     return args
 
 
-def convert_html(i, f):
-    html = pypandoc.convert_file(i, 'html', format=f)
+def convert_other(i, t, f):
+    resource = pypandoc.convert_file(i, t, format=f)
 
-    return html
+    return resource
 
 
 def convert_markdown(i, f):
     if f == 'gfm':
         f = 'html'
+    elif f == 'rst':
+        f = 'md'
 
     latex_body = pypandoc.convert_file(i, 'latex', format=f)
     latex_header = readfile('header.tex')
@@ -186,30 +202,30 @@ def convert_markdown(i, f):
     return latex
 
 
-def replace_rule(document):
+def replace_rule(latex):
     rule_pattern = re.compile(r'\\rule\{0.5\\linewidth\}')
     rule_replace = r'\\par\\noindent\\rule{\\textwidth}'
-    latex = re.sub(rule_pattern, rule_replace, document)
+    latex = re.sub(rule_pattern, rule_replace, latex)
 
     return latex
 
 
-def replace_verbatim(document):
+def replace_verbatim(latex):
     verbatim_pattern = re.compile(r'\\begin{Verbatim}')
     verbatim_replace = r'\\begin{Verbatim}[breaklines=true]'
-    latex = re.sub(verbatim_pattern, verbatim_replace, document)
+    latex = re.sub(verbatim_pattern, verbatim_replace, latex)
 
     return latex
 
 
-def replace_quote(document):
+def replace_quote(latex):
     quote_begin_replace = r'\\begin{quoting}'
     quote_end_replace = r'\\end{quoting}'
 
     quote_begin_pattern = re.compile(r'\\begin\{quote\}')
     quote_end_pattern = re.compile(r'\\end\{quote\}')
 
-    latex = re.sub(quote_begin_pattern, quote_begin_replace, document)
+    latex = re.sub(quote_begin_pattern, quote_begin_replace, latex)
     latex = re.sub(quote_end_pattern, quote_end_replace, latex)
 
     return latex
@@ -233,8 +249,10 @@ def extract_image_path(raw_image_url):
     return image_source_path
 
 
-def image_relative_path(image_source_path, image_target_path):
-    if file_extension(image_source_path) != '.gif' and file_extension(image_source_path) != '.svg':  # noqa: E501
+def image_relative_data(image_source_path, image_target_path):
+    allowed_file_types = ['image/gif', 'image/svg']
+
+    if file_type(image_source_path) not in allowed_file_types:
         image_relative_path = './assets/{}{}'.format(
             file_name(image_source_path),
             file_extension(image_source_path))
@@ -258,11 +276,11 @@ def check_convert_image(image_source_path, image_target_path):
     image_target_path = file_path('/assets/{}.png'.format(
         file_name(image_target_path)))
 
-    if file_extension(image_source_path) == '.svg':
+    if file_type(image_source_path) == 'image/svg':
         dimensions = convert_svg_image(
             image_source_path, image_target_path)
 
-    elif file_extension(image_source_path) == '.gif':
+    elif file_type(image_source_path) == 'image/gif':
         dimensions = convert_gif_image(
             image_source_path, image_target_path)
 
@@ -278,9 +296,65 @@ def check_convert_pixel(dimensions):
     return False
 
 
-def iterate_images(images, latex):
+def check_allowed_types(image_source_path, image_target_path, latex):
+    allowed_file_types = ['image/svg', 'image/jpeg',
+                          'image/bmp', 'image/png', 'image/gif']
+
+    print('file_type', file_type(image_source_path))
+
+    image_path, image_relative_string = image_relative_data(
+        image_source_path, image_target_path)
+
+    if file_type(image_source_path) not in allowed_file_types:
+        img_pattern = re.compile(
+            r'\\(includegraphics{})'.format(image_relative_string))
+        latex = re.sub(img_pattern, '', latex)
+
+    return latex, image_path, image_relative_string
+
+
+def replace_image(image_source_path, image_target_path, raw_image_url, latex):
+    allowed_file_types = ['image/svg', 'image/jpeg',
+                          'image/bmp', 'image/png', 'image/gif']
+
+    latex, image_path, image_relative_string = check_allowed_types(
+        image_source_path, image_target_path, latex)
+
+    latex = latex.replace(raw_image_url, image_path)
+
+    # remove includegraphics when image is not in allowed_file_types
+    if file_type(image_source_path) not in allowed_file_types:
+        img_pattern = re.compile(
+            r'({{\\includegraphics{{{0}}}}})'.format(image_path))
+        latex = re.sub(img_pattern, '', latex)
+
+    dimensions = check_convert_image(image_source_path, image_target_path)
+
+    if not dimensions:
+        dimensions = image_dimensions(image_path)
+
+        print('dimensions', dimensions)
+
+    img_pattern = re.compile(
+        r'\\(includegraphics{})'.format(image_relative_string))
+
+    # when dimensions not empty and when image width less or equal 170
+    if dimensions and check_convert_pixel(dimensions):
+        img_replace = r'\\includegraphics[width={0}mm, height={1}mm]{2}'.format(
+            pixeltomm(dimensions[0]), pixeltomm(dimensions[1]),
+            image_relative_string)
+    else:
+        img_replace = r'\\includegraphics[width=0.95\\textwidth]{}'.format(
+            image_relative_string)
+
+    latex = re.sub(img_pattern, img_replace, latex)
+
+    return latex
+
+
+def iterate_image_strings(images, latex):
     for image in images:
-        raw_image_url = unquote(image[1])
+        raw_image_url = image[1]
         print('raw_image_url', raw_image_url)
 
         # TODO: need to prepend base url
@@ -295,37 +369,14 @@ def iterate_images(images, latex):
             file_extension(image_source_path)))
         print('image_target_path', image_target_path)
 
-        resource = download(raw_image_url)
+        resource = download(unquote(raw_image_url).replace('\\', ''))
 
         if resource:
             write_file(image_source_path, 'wb', resource)
 
-        dimensions = check_convert_image(image_source_path, image_target_path)
-        image_path, image_relative_string = image_relative_path(
-            image_source_path, image_target_path)
-        print('image_path', image_path)
-        print('image_relative_string', image_relative_string)
+        latex = replace_image(image_source_path, image_target_path,
+                              raw_image_url, latex)
 
-        latex = latex.replace(raw_image_url, image_path)
-
-        img_pattern = re.compile(
-            r'\\(includegraphics{})'.format(image_relative_string))
-
-        if not dimensions:
-            dimensions = image_dimensions(image_path)
-
-        print('dimensions', dimensions)
-
-        # when image width less or equal 170
-        if dimensions and check_convert_pixel(dimensions):
-            img_replace = r'\\includegraphics[width={0}mm, height={1}mm]{2}'.format(
-                pixeltomm(dimensions[0]), pixeltomm(dimensions[1]),
-                image_relative_string)
-        else:
-            img_replace = r'\\includegraphics[width=0.95\\textwidth]{}'.format(
-                image_relative_string)
-
-        latex = re.sub(img_pattern, img_replace, latex)
         print('\n')
 
     return latex
@@ -347,9 +398,13 @@ def main():
     makedir(file_path('/assets'))
 
     if args.format == 'gfm':
-        html = convert_html(source, format)
+        resource = convert_other(source, 'html', format)
         source = file_path('/output/{}.html'.format(args.output))
-        write_file(source, 'w', html)
+        write_file(source, 'w', resource)
+    elif args.format == 'rst':
+        resource = convert_other(source, 'md', format)
+        source = file_path('/output/{}.md'.format(args.output))
+        write_file(source, 'w', resource)
 
     latex = convert_markdown(source, format)
     latex = replace_rule(latex)
@@ -357,9 +412,11 @@ def main():
     latex = replace_verbatim(latex)
     images = find_all_images(latex)
 
-    latex = iterate_images(images, latex)
+    latex = iterate_image_strings(images, latex)
     write_file(file_path('/output/{}.tex'.format(args.output)), 'w', latex)
-    convert_latex(args.output)
+
+    if not args.dry:
+        convert_latex(args.output)
 
 
 if __name__ == '__main__':
