@@ -24,6 +24,7 @@ PyGObject==3.36.0
 pypandoc==1.5
 pyparsing==2.4.7
 pyrsistent==0.16.0
+python-magic==0.4.15
 requests==2.23.0
 six==1.14.0
 testpath==0.4.4
