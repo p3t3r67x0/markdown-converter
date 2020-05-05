@@ -398,6 +398,28 @@ def convert_latex(target):
         shell=True)
 
 
+def replace_urls(url, latex):
+    scheme = urlparse(url).scheme
+    netloc = urlparse(url).netloc
+    path = urlparse(url).path
+
+    url = '{}://{}{}'.format(scheme, netloc, path)
+
+    url_pattern = re.compile(r'(\/([a-zA-Z0-9\-\_]*\.[a-zA-Z0-9]*))$')
+    base = re.sub(url_pattern, r'', url)
+
+    logger.info('identified base url: {}'.format(base))
+
+    href_pattern = re.compile(r'(\\href)\{((\/|\./)([a-zA-Z0-9\?\/\.\-=]*))\}')
+    latex = re.sub(href_pattern, r'\1{{{}/\4}}'.format(base), latex)
+
+    img_pattern = re.compile(
+        r'(\\includegraphics)(\[[a-zA-Z0-9\\=,\s\.]*\])?\{((\/|\./)([a-zA-Z0-9\?\/\.\-=]*))\}')  # noqa: E501
+    latex = re.sub(img_pattern, r'\1{{{}/\5}}'.format(base), latex)
+
+    return latex
+
+
 def main():
     args = argparser()
 
@@ -419,6 +441,7 @@ def main():
         write_file(source, 'w', resource)
 
     latex = convert_markdown(source, format)
+    latex = replace_urls(args.input, latex)
     latex = replace_rule(latex)
     latex = replace_quote(latex)
     latex = replace_verbatim(latex)
