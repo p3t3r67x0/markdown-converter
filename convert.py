@@ -130,7 +130,15 @@ def convert_gif_image(p, o):
     if not image:
         return None
 
-    image.save(o)
+    logger.info('writing png file {}'.format(o))
+
+    if image.is_animated:
+        logger.info('gif image has {} animated frames'.format(image.n_frames))
+
+        image.seek(image.n_frames - 1)
+        image.save(o, 'PNG')
+    else:
+        image.save(o, 'PNG')
 
     image = image_open(o)
 
@@ -238,7 +246,7 @@ def replace_quote(latex):
 
 def find_all_images(latex):
     img_url_pattern = re.compile(
-        r'\\(includegraphics){([a-zA-Z0-9$-_@.&+!*\(\), ]+)}')
+        r'(\\includegraphics)(\[[a-zA-Z0-9\%\@\\=\,\s\.]*\])?\{((https?://)[a-zA-Z0-9\\%\@\?\/\.\-=]*)\}')  # noqa: E501
 
     images = re.findall(img_url_pattern, latex)
 
@@ -255,7 +263,7 @@ def extract_image_path(raw_image_url):
 
 
 def image_relative_data(image_source_path, image_target_path):
-    allowed_file_types = ['image/gif', 'image/svg']
+    allowed_file_types = ['image/gif', 'image/svg', 'image/svg+xml']
 
     if file_type(image_source_path) not in allowed_file_types:
         image_relative_path = './assets/{}{}'.format(
@@ -276,12 +284,13 @@ def image_relative_data(image_source_path, image_target_path):
 
 
 def check_convert_image(image_source_path, image_target_path):
+    svg_file_types = ['image/svg+xml', 'image/svg']
     dimensions = None
 
     image_target_path = file_path('/assets/{}.png'.format(
         file_name(image_target_path)))
 
-    if file_type(image_source_path) == 'image/svg':
+    if file_type(image_source_path) in svg_file_types:
         dimensions = convert_svg_image(
             image_source_path, image_target_path)
 
@@ -302,7 +311,7 @@ def check_convert_pixel(dimensions):
 
 
 def check_allowed_types(image_source_path, image_target_path, latex):
-    allowed_file_types = ['image/svg', 'image/jpeg',
+    allowed_file_types = ['image/svg+xml', 'image/svg', 'image/jpeg',
                           'image/bmp', 'image/png', 'image/gif']
 
     logger.info('identified mimetype: {}'.format(file_type(image_source_path)))
@@ -319,7 +328,7 @@ def check_allowed_types(image_source_path, image_target_path, latex):
 
 
 def replace_image(image_source_path, image_target_path, raw_image_url, latex):
-    allowed_file_types = ['image/svg', 'image/jpeg',
+    allowed_file_types = ['image/svg+xml', 'image/svg', 'image/jpeg',
                           'image/bmp', 'image/png', 'image/gif']
 
     latex, image_path, image_relative_string = check_allowed_types(
@@ -345,12 +354,14 @@ def replace_image(image_source_path, image_target_path, raw_image_url, latex):
             dimensions[0], dimensions[1]))
 
     img_pattern = re.compile(
-        r'\\(includegraphics{})'.format(image_relative_string))
+        r'(\\includegraphics)(\[[a-zA-Z0-9\@\\=,\s\.]*\])?({0})'.format(
+            image_relative_string))
 
     # when dimensions not empty and when image width less or equal 170
     if dimensions and check_convert_pixel(dimensions):
         img_replace = r'\\includegraphics[width={0}mm, height={1}mm]{2}'.format(
-            pixeltomm(dimensions[0]), pixeltomm(dimensions[1]),
+            pixeltomm(dimensions[0]),
+            pixeltomm(dimensions[1]),
             image_relative_string)
     else:
         img_replace = r'\\includegraphics[width=0.95\\textwidth]{}'.format(
@@ -363,12 +374,8 @@ def replace_image(image_source_path, image_target_path, raw_image_url, latex):
 
 def iterate_image_strings(images, latex):
     for image in images:
-        raw_image_url = image[1]
+        raw_image_url = image[2]
         logger.info('raw image url: {}'.format(raw_image_url))
-
-        # TODO: need to prepend base url
-        if not raw_image_url.startswith('http'):
-            raw_image_url = raw_image_url
 
         image_source_path = extract_image_path(raw_image_url)
 
@@ -382,12 +389,13 @@ def iterate_image_strings(images, latex):
         resource = download(unquote(raw_image_url).replace('\\', ''))
 
         if resource:
+            logger.info('writing {}'.format(image_source_path))
             write_file(image_source_path, 'wb', resource)
 
         latex = replace_image(image_source_path, image_target_path,
                               raw_image_url, latex)
 
-        logging.info(f'sequence run has finished returning\n')
+        logger.info('image sequence run has finished returning\n')
 
     return latex
 
@@ -405,17 +413,22 @@ def replace_urls(url, latex):
 
     url = '{}://{}{}'.format(scheme, netloc, path)
 
-    url_pattern = re.compile(r'(\/([a-zA-Z0-9\-\_]*\.[a-zA-Z0-9]*))$')
+    url_pattern = re.compile(r'(\/([a-zA-Z0-9\@\-\_]*\.[a-zA-Z0-9]*))$')
     base = re.sub(url_pattern, r'', url)
 
-    logger.info('identified base url: {}'.format(base))
+    attr_pattern = re.compile(
+        r'(\\includegraphics)(\[[a-zA-Z0-9\@\\=,\s\.]*\])?')
+    latex = re.sub(attr_pattern, r'\1', latex)
 
-    href_pattern = re.compile(r'(\\href)\{((\/|\./)([a-zA-Z0-9\?\/\.\-=]*))\}')
+    href_pattern = re.compile(
+        r'(\\href)\{((\/|\./)([a-zA-Z0-9\@\?\/\.\-=]*))\}')
     latex = re.sub(href_pattern, r'\1{{{}/\4}}'.format(base), latex)
 
     img_pattern = re.compile(
-        r'(\\includegraphics)(\[[a-zA-Z0-9\\=,\s\.]*\])?\{((\/|\./)([a-zA-Z0-9\?\/\.\-=]*))\}')  # noqa: E501
+        r'(\\includegraphics)(\[[a-zA-Z0-9\@\\=,\s\.]*\])?\{((\/|\./)([a-zA-Z0-9\@\?\/\.\-=]*))\}')  # noqa: E501
     latex = re.sub(img_pattern, r'\1{{{}/\5}}'.format(base), latex)
+
+    logger.info('identified base url: {}'.format(base))
 
     return latex
 
