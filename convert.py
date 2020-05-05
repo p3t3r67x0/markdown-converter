@@ -10,6 +10,7 @@ import argparse
 import requests
 import subprocess
 import pypandoc
+import logging
 import uuid
 
 from magic import from_file
@@ -21,6 +22,10 @@ from gi.repository.GLib import Error
 gi.require_version('Rsvg', '2.0')
 
 from gi.repository import Rsvg  # noqa: E402
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('converter')
 
 
 def readfile(p):
@@ -39,10 +44,10 @@ def download(p):
     try:
         res.raise_for_status()
     except HTTPError as e:
-        print(e)
+        logger.error(e)
         return None
     except ConnectionError as e:
-        print(e)
+        logger.error(e)
         return None
 
     return res.content
@@ -144,7 +149,7 @@ def convert_svg_image(p, o):
     try:
         svg = handle.new_from_file(p)
     except Error as e:
-        print(e)
+        logger.error(e)
         return None
 
     width = svg.props.width
@@ -300,7 +305,7 @@ def check_allowed_types(image_source_path, image_target_path, latex):
     allowed_file_types = ['image/svg', 'image/jpeg',
                           'image/bmp', 'image/png', 'image/gif']
 
-    print('file_type', file_type(image_source_path))
+    logger.info('identified mimetype: {}'.format(file_type(image_source_path)))
 
     image_path, image_relative_string = image_relative_data(
         image_source_path, image_target_path)
@@ -333,7 +338,11 @@ def replace_image(image_source_path, image_target_path, raw_image_url, latex):
     if not dimensions:
         dimensions = image_dimensions(image_path)
 
-        print('dimensions', dimensions)
+    if not dimensions:
+        logger.error('could not get dimensions from image')
+    else:
+        logger.info('identified dimensions width: {}px and height {}px'.format(
+            dimensions[0], dimensions[1]))
 
     img_pattern = re.compile(
         r'\\(includegraphics{})'.format(image_relative_string))
@@ -355,19 +364,20 @@ def replace_image(image_source_path, image_target_path, raw_image_url, latex):
 def iterate_image_strings(images, latex):
     for image in images:
         raw_image_url = image[1]
-        print('raw_image_url', raw_image_url)
+        logger.info('raw image url: {}'.format(raw_image_url))
 
         # TODO: need to prepend base url
         if not raw_image_url.startswith('http'):
             raw_image_url = raw_image_url
 
         image_source_path = extract_image_path(raw_image_url)
-        print('image_source_path', image_source_path)
 
         image_target_path = file_path('/assets/{}{}'.format(
             file_name(image_source_path),
             file_extension(image_source_path)))
-        print('image_target_path', image_target_path)
+
+        logger.info('image source path: {}'.format(image_source_path))
+        logger.info('image target path: {}'.format(image_target_path))
 
         resource = download(unquote(raw_image_url).replace('\\', ''))
 
@@ -377,7 +387,7 @@ def iterate_image_strings(images, latex):
         latex = replace_image(image_source_path, image_target_path,
                               raw_image_url, latex)
 
-        print('\n')
+        logging.info(f'sequence run has finished returning\n')
 
     return latex
 
@@ -400,10 +410,12 @@ def main():
     if args.format == 'gfm':
         resource = convert_other(source, 'html', format)
         source = file_path('/output/{}.html'.format(args.output))
+        logger.info('writing {}'.format(source))
         write_file(source, 'w', resource)
     elif args.format == 'rst':
         resource = convert_other(source, 'md', format)
         source = file_path('/output/{}.md'.format(args.output))
+        logger.info('writing {}'.format(source))
         write_file(source, 'w', resource)
 
     latex = convert_markdown(source, format)
@@ -413,7 +425,9 @@ def main():
     images = find_all_images(latex)
 
     latex = iterate_image_strings(images, latex)
-    write_file(file_path('/output/{}.tex'.format(args.output)), 'w', latex)
+    target = file_path('/output/{}.tex'.format(args.output))
+    logger.info('writing {}'.format(target))
+    write_file(target, 'w', latex)
 
     if not args.dry:
         convert_latex(args.output)
