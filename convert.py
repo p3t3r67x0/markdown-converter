@@ -416,6 +416,10 @@ def replace_urls(url, latex):
     url_pattern = re.compile(r'(\/([a-zA-Z0-9\@\-\_]*\.[a-zA-Z0-9]*))$')
     base = re.sub(url_pattern, r'', url)
 
+    text_pattern = re.compile(
+        r'(\\texttt)\{(.*)?\}')
+    latex = re.sub(text_pattern, r'\\hltt{\2}', latex)
+
     attr_pattern = re.compile(
         r'(\\includegraphics)(\[[a-zA-Z0-9\@\\=,\s\.]*\])?')
     latex = re.sub(attr_pattern, r'\1', latex)
