@@ -22,15 +22,16 @@
 
 \usepackage{setspace}
 \usepackage{titlesec}
-
 \usepackage{caption}
-\usepackage{soul}
+
 \usepackage{seqsplit}
 \usepackage{etoolbox}
 \usepackage{booktabs,siunitx}
-\usepackage{longtable}
 \usepackage{relsize}
 \usepackage{times}
+
+\usepackage{array}
+\usepackage{multirow}
 
 \usepackage[normalem]{ulem}
 \usepackage[default,scale=1]{opensans}
@@ -187,21 +188,9 @@
 \newcommand{\NormalTok}[1]{\color{americanrose}{{#1}}}
 \newcommand{\StringTok}[1]{\color{azure}{{#1}}}
 
-\let\hlORIG\hl
-
-\ExplSyntaxOn
-\tl_new:N \l_jdhao_hlx_tl
-\RenewDocumentCommand \hl { m }
-{
- \tl_set:Nn \l_jdhao_hlx_tl { #1 }
- \tl_replace_all:Nnn \l_jdhao_hlx_tl { \  } { ~ }
- \regex_replace_all:nnN { [^\s\c{-}] } { \c{hbox} \0 } \l_jdhao_hlx_tl
- \exp_args:NV \hlORIG \l_jdhao_hlx_tl
-}
-\ExplSyntaxOff
-
-\let\oldtexttt\texttt
-\renewcommand{\texttt}[1]{\sethlcolor{platinum}\color{darkjunglegreen}\oldtexttt{\hl{#1}}}
+\usepackage{soul}
+\soulregister{\texttt}{1}
+\DeclareRobustCommand{\hltt}[1]{\sethlcolor{platinum}{\ttfamily\hl{\mbox{#1}}}}
 
 \usepackage{enumitem}
 \setlist{leftmargin=*,parsep=0pt,itemsep=2pt,topsep=2pt,partopsep=0pt}
@@ -214,6 +203,11 @@
  \setlength{\itemsep}{4pt}\setlength{\parskip}{0pt}}
 
 \setlength{\parindent}{0pt}
+
+\usepackage{longtable}
+\setlength\LTleft{0pt}
+\setlength\LTright{0pt}
+\setlength\LTcapwidth{\textwidth}
 
 \setlist[itemize]{leftmargin=0.15in}
 
