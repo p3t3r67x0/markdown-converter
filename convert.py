@@ -114,12 +114,20 @@ def image_open(p):
 
 def image_dimensions(p):
     image = image_open(p)
+    maxwidth = 990
+    maxheight = 660
 
     if not image:
         return None
 
     width, height = image.size
     dimensions = [width, height]
+
+    if width >= maxwidth:
+        ratio = min(maxwidth / width, maxheight / height)
+        width = width * ratio
+        height = height * ratio
+        dimensions = [width, height]
 
     return dimensions
 
@@ -246,7 +254,7 @@ def replace_quote(latex):
 
 def find_all_images(latex):
     img_url_pattern = re.compile(
-        r'(\\includegraphics)(\[[a-zA-Z0-9\%\@\\=\,\s\.]*\])?\{((https?://)[a-zA-Z0-9\\%\@\?\/\.\-=]*)\}')  # noqa: E501
+        r'(\\includegraphics)(\[[a-zA-Z0-9\%\@\\=\,\s\.]*\])?\{((https?://)[a-zA-Z0-9\&\\%\@\?\/\.\-=]*)\}')  # noqa: E501
 
     images = re.findall(img_url_pattern, latex)
 
@@ -301,15 +309,6 @@ def check_convert_image(image_source_path, image_target_path):
     return dimensions
 
 
-def check_convert_pixel(dimensions):
-    width = pixeltomm(dimensions[0])
-
-    if width <= 170:
-        return True
-
-    return False
-
-
 def check_allowed_types(image_source_path, image_target_path, latex):
     allowed_file_types = ['image/svg+xml', 'image/svg', 'image/jpeg',
                           'image/bmp', 'image/png', 'image/gif']
@@ -357,14 +356,13 @@ def replace_image(image_source_path, image_target_path, raw_image_url, latex):
         r'(\\includegraphics)(\[[a-zA-Z0-9\@\\=,\s\.]*\])?({0})'.format(
             image_relative_string))
 
-    # when dimensions not empty and when image width less or equal 170
-    if dimensions and check_convert_pixel(dimensions):
-        img_replace = r'\\includegraphics[width={0}mm, height={1}mm]{2}'.format(
+    if dimensions:
+        img_replace = r'\\includegraphics[width={0}mm,height={1}mm]{2}'.format(
             pixeltomm(dimensions[0]),
             pixeltomm(dimensions[1]),
             image_relative_string)
     else:
-        img_replace = r'\\includegraphics[width=0.95\\textwidth]{}'.format(
+        img_replace = r'\\includegraphics[width=9in,height=5in]{}'.format(
             image_relative_string)
 
     latex = re.sub(img_pattern, img_replace, latex)
@@ -429,7 +427,7 @@ def replace_urls(url, latex):
     latex = re.sub(href_pattern, r'\1{{{}/\4}}'.format(base), latex)
 
     img_pattern = re.compile(
-        r'(\\includegraphics)(\[[a-zA-Z0-9\@\\=,\s\.]*\])?\{((\/|\./)([a-zA-Z0-9\@\?\/\.\-=]*))\}')  # noqa: E501
+        r'(\\includegraphics)(\[[a-zA-Z0-9\@\\=,\s\.]*\])?\{((?!https?)(\/|\.\/)?([a-zA-Z0-9\\&\@\?\/\.\-=]+))\}')  # noqa: E501
     latex = re.sub(img_pattern, r'\1{{{}/\5}}'.format(base), latex)
 
     logger.info('identified base url: {}'.format(base))
