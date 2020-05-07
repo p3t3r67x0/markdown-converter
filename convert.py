@@ -114,20 +114,20 @@ def image_open(p):
 
 def image_dimensions(p):
     image = image_open(p)
-    maxwidth = 990
-    maxheight = 660
+    maxwidth = 782
+    maxheight = 567
 
     if not image:
         return None
 
     width, height = image.size
-    dimensions = [width, height]
 
     if width >= maxwidth:
         ratio = min(maxwidth / width, maxheight / height)
         width = width * ratio
         height = height * ratio
-        dimensions = [width, height]
+
+    dimensions = [width, height]
 
     return dimensions
 
@@ -148,13 +148,7 @@ def convert_gif_image(p, o):
     else:
         image.save(o, 'PNG')
 
-    image = image_open(o)
-
-    if not image:
-        return None
-
-    width, height = image.size
-    dimensions = [width, height]
+    dimensions = image_dimensions(o)
 
     return dimensions
 
@@ -178,7 +172,7 @@ def convert_svg_image(p, o):
     svg_context.restore()
     svg_surface.write_to_png(o)
 
-    dimensions = [width, height]
+    dimensions = image_dimensions(o)
 
     return dimensions
 
