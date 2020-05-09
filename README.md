@@ -2,7 +2,7 @@
 
 > A tool to convert markdown with help of pandoc and LaTeX to pdf
 
-![Emojies](./docs/undraw.png)
+![Write markdown and convert it to pdf](./docs/undraw.png)
 
 You can choose to build the markdown converter or to run the docker container
 
