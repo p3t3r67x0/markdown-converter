@@ -21,6 +21,8 @@
 *.mtc1
 *.out
 *.synctex.gz
-venv
+__pycache__
+.pytest_cache
 assets
 output
+venv
