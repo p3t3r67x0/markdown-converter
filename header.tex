@@ -34,12 +34,9 @@
 \usepackage{multirow}
 
 \usepackage[normalem]{ulem}
-\usepackage[default,scale=1]{opensans}
-\usepackage[dvipdfmx]{graphicx}
+\usepackage[default,scale=0.9]{opensans}
+\usepackage{graphicx}
 \raggedright
-
-% provides textsubscript
-\usepackage{fixltx2e}
 
 \ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
  \usepackage[T1]{fontenc}
@@ -147,14 +144,14 @@
 
 \titleformat*{\section}{\huge\bfseries}
 \titleformat*{\subsection}{\large\bfseries}
-\titleformat*{\subsubsection}{\large\bfseries}
-\titleformat*{\paragraph}{\large\bfseries}
-\titleformat*{\subparagraph}{\large\bfseries}
+\titleformat*{\subsubsection}{\normalsize\bfseries}
+\titleformat*{\paragraph}{\normalsize\bfseries}
+\titleformat*{\subparagraph}{\normalsize\bfseries}
 
 \titlespacing*{\section} {0pt}{2em}{1.5em}
-\titlespacing*{\subsection} {0pt}{1.9em}{0.2em}
-\titlespacing*{\subsubsection} {0pt}{1.8em}{0.2em}
-\titlespacing*{\paragraph} {0pt}{1.6em}{0.2em}
+\titlespacing*{\subsection} {0pt}{1.9em}{0.8em}
+\titlespacing*{\subsubsection} {0pt}{1.8em}{0.6em}
+\titlespacing*{\paragraph} {0pt}{1.6em}{0.4em}
 \titlespacing*{\subparagraph} {0pt}{1.4em}{0.2em}
 
 \renewcommand\sectionmark[1]{\markboth{#1}{}}
@@ -213,7 +210,7 @@
 \setlength\LTright{0pt}
 \setlength\LTcapwidth{\textwidth}
 
-\setstretch{0.9}
+\setstretch{1}
 
 % package to scale
 \usepackage{scalerel}
