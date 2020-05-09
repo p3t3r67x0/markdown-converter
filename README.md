@@ -8,9 +8,24 @@
 
 > A tool to convert markdown with help of pandoc and LaTeX to pdf
 
-![Write markdown and convert it to pdf](./docs/undraw.png)
+![Write markdown and convert it to pdf](https://github.com/p3t3r67x0/markdown-converter/raw/master/docs/undraw.png)
 
 You can choose to build the markdown converter or to run the docker container
+
+
+## Docker Hub
+
+```bash
+docker pull opendatacoder/markdown
+```
+
+
+## Docker Usage
+
+```bash
+docker run --rm -v /home/ubuntu/:/app/output markdown --format md --output readme --input \
+https://raw.githubusercontent.com/p3t3r67x0/markdown-converter/master/README.md
+```
 
 
 ## Build Setup
@@ -34,12 +49,16 @@ pip3 install -r requirements.txt
 
 ## Docker Setup
 
+To run the docker container have a look at **Docker Usage** section
+
 ```bash
 docker build -t markdown .
-docker run --rm -it --entrypoint /bin/bash markdown
 ```
 
-## Examples
+
+## Local Usage
+
+Here you have a few usage examples which you can try as well on the Docker container
 
 ### Convert markdown to LaTeX and PDF
 
