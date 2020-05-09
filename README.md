@@ -1,5 +1,10 @@
 # markdown-converter
 
+[mit license](https://img.shields.io/github/license/p3t3r67x0/markdown-converter)
+[github build status](https://img.shields.io/github/workflow/status/p3t3r67x0/markdown-converter/markdown-converter)
+[repository size](https://img.shields.io/github/repo-size/p3t3r67x0/markdown-converter)
+[python version](https://img.shields.io/github/pipenv/locked/python-version/p3t3r67x0/markdown-converter)
+
 > A tool to convert markdown with help of pandoc and LaTeX to pdf
 
 ![Write markdown and convert it to pdf](./docs/undraw.png)
