@@ -4,13 +4,16 @@ import gi
 import os
 import re
 import math
+import emoji
 import cairo
 import pathlib
 import argparse
 import requests
 import subprocess
+import unicodedata
 import pypandoc
 import logging
+import random
 import uuid
 
 from magic import from_file
@@ -18,6 +21,7 @@ from PIL import Image, UnidentifiedImageError
 from requests.exceptions import ConnectionError, HTTPError
 from urllib.parse import urlparse, unquote
 from gi.repository.GLib import Error
+from string import ascii_lowercase
 
 gi.require_version('Rsvg', '2.0')
 
@@ -429,6 +433,53 @@ def replace_urls(url, latex):
     return latex
 
 
+def random_word():
+    VOWELS = ['a', 'e', 'i', 'o', 'u']
+    CONSONANTS = [c for c in ascii_lowercase if c not in VOWELS]
+
+    random_range = random.randint(8, 12)
+    word = ''
+
+    for i in range(random_range):
+        word += random.choice(VOWELS) + random.choice(CONSONANTS)
+    return word
+
+
+def replace_emoji(latex):
+    emoji_chars = emoji.EMOJI_ALIAS_UNICODE.values()
+    unicode_chars = set()
+    emojies = []
+
+    def char_or_emoji(char):
+        if char in emoji_chars:
+            return unicodedata.name(char)
+        return char
+
+    emoji_pattern = re.compile('|'.join(
+        re.escape(u) for u in emoji_chars))
+    emojies = re.findall(emoji_pattern, latex)
+
+    if len(emojies) > 0:
+        logger.info('found emojies: {}'.format(emojies))
+
+    for item in emojies:
+        unicodes = []
+
+        for char in item:
+            item_name = random_word()
+
+            if not len(item) > 1:
+                unicodes.append(r'{:x}'.format(ord(char)).upper())
+                unicode_chars.add(
+                    r'\\def\\{1}{{\\scalerel*{{\\includegraphics{{./emojies/{0}.pdf}}}}{{0}}}}'.format('-'.join(unicodes), item_name))
+                latex = re.sub(
+                    item, r'{{\\large\\{0}}}'.format(item_name), latex)
+
+    latex = re.sub(r'\\newunicodechar\{\}', '\n'.join(unicode_chars), latex)
+
+    return latex
+
+
 def main():
     args = argparser()
 
@@ -452,6 +503,7 @@ def main():
     latex = convert_markdown(source, format)
     latex = replace_urls(args.input, latex)
     latex = replace_rule(latex)
+    latex = replace_emoji(latex)
     latex = replace_quote(latex)
     latex = replace_verbatim(latex)
     images = find_all_images(latex)

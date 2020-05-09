@@ -5,7 +5,7 @@
 \usepackage[a4paper, total={7in, 10in}]{geometry}
 \usepackage{amssymb,amsmath}
 \usepackage{ifxetex,ifluatex}
-\usepackage{graphicx,grffile}
+\usepackage{grffile}
 \usepackage{listings}
 \usepackage{fancyhdr}
 \usepackage{fancyvrb}
@@ -35,7 +35,7 @@
 
 \usepackage[normalem]{ulem}
 \usepackage[default,scale=1]{opensans}
-\usepackage[none]{hyphenat}
+\usepackage[dvipdfmx]{graphicx}
 \raggedright
 
 % provides textsubscript
@@ -79,11 +79,14 @@
 \def\fps@figure{htbp}
 \makeatother
 
-\definecolor{beaublue}{rgb}{0.74, 0.83, 0.9}
+\definecolor{aoenglish}{rgb}{0.0, 0.5, 0.0}
 \definecolor{platinum}{rgb}{0.9, 0.89, 0.89}
+\definecolor{beaublue}{rgb}{0.74, 0.83, 0.9}
+\definecolor{byzantine}{rgb}{0.74, 0.2, 0.64}
 \definecolor{pastelgray}{rgb}{0.81, 0.81, 0.77}
 \definecolor{caribbeangreen}{rgb}{0.0, 0.8, 0.6}
 \definecolor{americanrose}{rgb}{1.0, 0.01, 0.24}
+\definecolor{bleudefrance}{rgb}{0.19, 0.55, 0.91}
 \definecolor{darkelectricblue}{rgb}{0.33, 0.41, 0.47}
 \definecolor{mediumtealblue}{rgb}{0.0, 0.33, 0.71}
 \definecolor{spirodiscoball}{rgb}{0.06, 0.75, 0.99}
@@ -94,6 +97,7 @@
 \definecolor{bittersweet}{rgb}{1.0, 0.44, 0.37}
 \definecolor{carminepink}{rgb}{0.92, 0.3, 0.26}
 \definecolor{floralwhite}{rgb}{1.0, 0.98, 0.94}
+\definecolor{ultramarine}{rgb}{0, 0.125, 0.376}
 \definecolor{hotmagenta}{rgb}{1.0, 0.11, 0.81}
 \definecolor{guppiegreen}{rgb}{0.0, 1.0, 0.5}
 \definecolor{icterine}{rgb}{0.99, 0.97, 0.37}
@@ -162,8 +166,8 @@
 \newenvironment{Shaded}{}{}
 
 \newcommand{\VerbatimStringTok}[1]{\color{azure}{{#1}}}
-\newcommand{\KeywordTok}[1]{\color{hollywoodcerise}{\textbf{{#1}}}}
-\newcommand{\DataTypeTok}[1]{\color{hollywoodcerise}{{#1}}}
+\newcommand{\KeywordTok}[1]{\color{bleudefrance}{\textbf{{#1}}}}
+\newcommand{\DataTypeTok}[1]{\color{bleudefrance}{{#1}}}
 \newcommand{\DecValTok}[1]{\color{darkelectricblue}{{#1}}}
 \newcommand{\BaseNTok}[1]{\color{darkelectricblue}{{#1}}}
 \newcommand{\FloatTok}[1]{\color{darkelectricblue}{{#1}}}
@@ -173,7 +177,7 @@
 \newcommand{\CommentTok}[1]{\color{darkelectricblue}{\textit{{#1}}}}
 \newcommand{\OtherTok}[1]{\color{hollywoodcerise}{{#1}}}
 \newcommand{\AlertTok}[1]{\color{hollywoodcerise}{\textbf{{#1}}}}
-\newcommand{\FunctionTok}[1]{\color{azure}{{#1}}}
+\newcommand{\FunctionTok}[1]{\color{ultramarine}{{#1}}}
 \newcommand{\RegionMarkerTok}[1]{\color{darkjunglegreen}{{#1}}}
 \newcommand{\ErrorTok}[1]{\color{hollywoodcerise}{\textbf{{#1}}}}
 \newcommand{\SpecialCharTok}[1]{\color{hollywoodcerise}{{#1}}}
@@ -184,9 +188,9 @@
 \newcommand{\InformationTok}[1]{\color{bittersweet}{{#1}}}
 \newcommand{\AttributeTok}[1]{\color{mediumtealblue}{{#1}}}
 \newcommand{\ControlFlowTok}[1]{\color{darkjunglegreen}{{#1}}}
-\newcommand{\ExtensionTok}[1]{\color{spirodiscoball}{{#1}}}
-\newcommand{\NormalTok}[1]{\color{americanrose}{{#1}}}
-\newcommand{\StringTok}[1]{\color{azure}{{#1}}}
+\newcommand{\ExtensionTok}[1]{\color{ultramarine}{{#1}}}
+\newcommand{\NormalTok}[1]{\color{byzantine}{{#1}}}
+\newcommand{\StringTok}[1]{\color{aoenglish}{{#1}}}
 
 \usepackage{soul}
 \soulregister{\texttt}{1}
@@ -208,6 +212,12 @@
 \setlength\LTleft{0pt}
 \setlength\LTright{0pt}
 \setlength\LTcapwidth{\textwidth}
+
+\setstretch{0.9}
+
+% package to scale
+\usepackage{scalerel}
+\newunicodechar{}
 
 \setlist[itemize]{leftmargin=0.15in}
 
