@@ -1,7 +1,8 @@
 # markdown-converter
 
-> A tool to convert markdown with help of pandoc to pdf
+> A tool to convert markdown with help of pandoc and LaTeX to pdf
 
+![Emojies]('./docs/emojies.png')
 
 You can choose to build the markdown converter or to run the docker container
 
@@ -32,8 +33,25 @@ docker build -t markdown .
 docker run --rm -it --entrypoint /bin/bash markdown
 ```
 
-## Example
+## Examples
+
+### Convert markdown to LaTeX and PDF
+
+*HINT*: You can choose between different `--format` options like `md` or `gfm` and `html`.
+
+Fetch all assets from a remote url and convert a markdown into a **LaTeX** file and render a **pdf**.
 
 ```bash
-./convert.py --input https://raw.githubusercontent.com/p3t3r67x0/markdown-converter/master/README.md --format md --output readme
+./convert.py --format md --output readme --input \
+https://raw.githubusercontent.com/p3t3r67x0/markdown-converter/master/README.md
+```
+
+
+### Convert markdown to LaTeX
+
+Use the `--dry` flag to not render a **pdf** file but convert the markdown into a **LaTeX** file with all fetched assets.
+
+```bash
+./convert.py --format md --output readme --dry --input \
+https://raw.githubusercontent.com/p3t3r67x0/markdown-converter/master/README.md
 ```
