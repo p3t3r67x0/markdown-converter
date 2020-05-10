@@ -11,7 +11,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Setup System dependencies
-      run: sudo apt install libgirepository1.0-dev python3.7 python3-pip python3-wheel
+      run: sudo apt install libgirepository1.0-dev
 
     - name: Set up Python 3.8
       uses: actions/setup-python@v1
@@ -20,7 +20,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip3 install --upgrade pip
+        sudo python3.7 python3-pip python3-wheel
         pip3 install flake8 pytest
         pip3 install -r requirements.txt
 
