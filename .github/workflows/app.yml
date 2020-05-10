@@ -9,18 +9,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+
     - name: Setup System dependencies
       run: sudo apt install libgirepository1.0-dev
+
     - name: Set up Python 3.8
       uses: actions/setup-python@v1
       with:
         python-version: 3.8
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install flake8 pytest
         pip install -r requirements.txt
+
     - name: Lint with flake8
       run: |
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Build the docker image
+      run: docker build -t markdown:latest -f Dockerfile .
+
+    - name: Tag the docker image
+      run: docker tag markdown:latest opendatacoder/markdown:latest
+
+    - name: Login to hub.docker.com
+      run: docker login -u ${{ secrets.DOCKER_USERNAME }}
+
+    - name: Push the docker image
+      run: ${{ secrets.DOCKER_PASSWORD }} | docker push opendatacoder/markdown:latest --password-stdin
+
+    - name: Logout from hub.docker.com
+      run: docker logout
