@@ -28,10 +28,15 @@ docker pull opendatacoder/markdown
 ## 📦 Docker Usage
 
 ```bash
-docker run --rm -v /home/ubuntu/:/app/output markdown --format md --output readme --input \
-https://raw.githubusercontent.com/p3t3r67x0/markdown-converter/master/README.md
+docker run --rm -v $PWD:/home/latex/data/output opendatacoder/markdown --format md \
+  --output readme --input https://raw.githubusercontent.com/repository/project/README.md
 ```
 
+In case you want to access the container you can run this command
+
+```bash
+docker run --rm -it --entrypoint /bin/bash opendatacoder/markdown
+```
 
 ## 🧱 Local Docker Setup
 
@@ -73,7 +78,7 @@ Fetch all assets from a remote url and convert a markdown into a **LaTeX** file 
 
 ```bash
 ./convert.py --format md --output readme --input \
-https://raw.githubusercontent.com/p3t3r67x0/markdown-converter/master/README.md
+  https://raw.githubusercontent.com/repository/project/README.md
 ```
 
 
@@ -83,5 +88,5 @@ Use the `--dry` flag to not render a **pdf** file but convert the markdown into 
 
 ```bash
 ./convert.py --format md --output readme --dry --input \
-https://raw.githubusercontent.com/p3t3r67x0/markdown-converter/master/README.md
+  https://raw.githubusercontent.com/repository/project/README.md
 ```
