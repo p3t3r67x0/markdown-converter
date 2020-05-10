@@ -30,16 +30,16 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Build the docker image
-      run: docker build -t markdown:latest -f Dockerfile .
+      # run: docker build -t markdown:latest -f Dockerfile .
 
     - name: Tag the docker image
-      run: docker tag markdown:latest opendatacoder/markdown:latest
+      # run: docker tag markdown:latest opendatacoder/markdown:latest
 
     - name: Login to hub.docker.com
-      run: docker login -u ${{ secrets.DOCKER_USERNAME }}
+      run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Push the docker image
-      run: ${{ secrets.DOCKER_PASSWORD }} | docker push opendatacoder/markdown:latest --password-stdin
+      # run: docker push opendatacoder/markdown:latest
 
     - name: Logout from hub.docker.com
       run: docker logout
