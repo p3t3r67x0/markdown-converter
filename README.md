@@ -1,4 +1,4 @@
-# markdown-converter
+# markdown-converter 📖
 
 ![mit license](https://img.shields.io/github/license/p3t3r67x0/markdown-converter)
 ![github build status](https://img.shields.io/github/workflow/status/p3t3r67x0/markdown-converter/markdown-converter)
@@ -10,17 +10,20 @@
 
 ![Write markdown and convert it to pdf](https://github.com/p3t3r67x0/markdown-converter/raw/master/docs/undraw.png)
 
+
+This is a tool which downloads all images from markdown any online markdown and converts it with help of pandoc and LaTeX into a beautiful pdf. This small tool turns text, images, links as well as emojies 🚀 into a pdf file.
+
 You can choose to build the markdown converter or to run the docker container
 
 
-## Docker Hub
+## Docker Hub 📦
 
 ```bash
 docker pull opendatacoder/markdown
 ```
 
 
-## Docker Usage
+## Docker Usage 📦
 
 ```bash
 docker run --rm -v /home/ubuntu/:/app/output markdown --format md --output readme --input \
@@ -28,7 +31,16 @@ https://raw.githubusercontent.com/p3t3r67x0/markdown-converter/master/README.md
 ```
 
 
-## Build Setup
+## Local Docker Setup 📦
+
+To run the docker container have a look at **Docker Usage** section
+
+```bash
+docker build -t markdown .
+```
+
+
+## Local Build Setup 🧱
 
 ```bash
 # install build dependencies on debian or ubuntu
@@ -47,16 +59,7 @@ pip3 install -r requirements.txt
 ```
 
 
-## Docker Setup
-
-To run the docker container have a look at **Docker Usage** section
-
-```bash
-docker build -t markdown .
-```
-
-
-## Local Usage
+## Local Usage 🧱
 
 Here you have a few usage examples which you can try as well on the Docker container
 
