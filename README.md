@@ -1,4 +1,4 @@
-# markdown-converter 📖
+# 📰 markdown-converter
 
 ![mit license](https://img.shields.io/github/license/p3t3r67x0/markdown-converter)
 ![github build status](https://img.shields.io/github/workflow/status/p3t3r67x0/markdown-converter/markdown-converter)
@@ -11,19 +11,21 @@
 ![Write markdown and convert it to pdf](https://github.com/p3t3r67x0/markdown-converter/raw/master/docs/undraw.png)
 
 
-This is a tool which downloads all images from markdown any online markdown and converts it with help of pandoc and LaTeX into a beautiful pdf. This small tool turns text, images, links as well as emojies 🚀 into a pdf file.
+This tool downloads all images from any online markdown repository and converts it with help of pandoc and LaTeX into a beautiful pdf. There is also an image converter integrated to convert anmimated gif or svg images into a png image. All together this tool turns text, images, links as well as emojies 🚀 into a pdf file.
 
 You can choose to build the markdown converter or to run the docker container
 
 
-## Docker Hub 📦
+## 📦 Docker Hub
+
+Make use of the pre build docker image
 
 ```bash
 docker pull opendatacoder/markdown
 ```
 
 
-## Docker Usage 📦
+## 📦 Docker Usage
 
 ```bash
 docker run --rm -v /home/ubuntu/:/app/output markdown --format md --output readme --input \
@@ -31,7 +33,7 @@ https://raw.githubusercontent.com/p3t3r67x0/markdown-converter/master/README.md
 ```
 
 
-## Local Docker Setup 📦
+## 🧱 Local Docker Setup
 
 To run the docker container have a look at **Docker Usage** section
 
@@ -40,7 +42,7 @@ docker build -t markdown .
 ```
 
 
-## Local Build Setup 🧱
+## 🧱 Local Build Setup
 
 ```bash
 # install build dependencies on debian or ubuntu
@@ -59,11 +61,11 @@ pip3 install -r requirements.txt
 ```
 
 
-## Local Usage 🧱
+## 🧱 Local Usage
 
 Here you have a few usage examples which you can try as well on the Docker container
 
-### Convert markdown to LaTeX and PDF
+### 🧾 Convert markdown to LaTeX and PDF
 
 *HINT*: You can choose between different `--format` options like `md` or `gfm` and `html`.
 
@@ -75,7 +77,7 @@ https://raw.githubusercontent.com/p3t3r67x0/markdown-converter/master/README.md
 ```
 
 
-### Convert markdown to LaTeX
+### 🧾 Convert markdown to LaTeX
 
 Use the `--dry` flag to not render a **pdf** file but convert the markdown into a **LaTeX** file with all fetched assets.
 
