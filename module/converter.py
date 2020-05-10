@@ -475,7 +475,7 @@ def replace_emoji(latex):
                 unicode_chars.add(
                     r'\\def\\{1}{{\\scalerel*{{\\includegraphics{{./emojies/{0}.pdf}}}}{{0}}}}'.format('-'.join(unicodes), item_name))
                 latex = re.sub(
-                    item, r'{{\\large\\{0}}}'.format(item_name), latex)
+                    item, r'\\texorpdfstring{{\\large\\protect\\{0}}}{{}}'.format(item_name), latex)
 
     latex = re.sub(r'\\newunicodechar\{\}', '\n'.join(unicode_chars), latex)
 
