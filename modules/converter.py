@@ -94,6 +94,32 @@ def replace_quote(latex):
     return latex
 
 
+def replace_unicode(latex):
+    pattern = re.compile(r'([^\x00-\x7F])')
+    items = re.findall(pattern, latex)
+    unicode_chars = set()
+
+    if len(items) > 0:
+        logger.info('found unicodes: {}'.format(items))
+
+    for item in items:
+        unicodes = []
+
+        for char in item:
+            item_name = random_word()
+
+            if not len(item) > 1:
+                unicodes.append(r'{:x}'.format(ord(char)).upper())
+                unicode_chars.add(
+                    r'\\def\\{1}{{\\scalerel*{{\\includegraphics{{./fonts/{0}.pdf}}}}{{0}}}}'.format('-'.join(unicodes), item_name))  # noqa: E501
+                latex = re.sub(
+                    item, r'\\texorpdfstring{{\\large\\protect\\{0}}}{{}}'.format(item_name), latex)  # noqa: E501
+
+    latex = re.sub(r'\\unicodechars\{\}', '\n'.join(unicode_chars), latex)
+
+    return latex
+
+
 def find_all_images(latex):
     img_url_pattern = re.compile(
         r'(\\includegraphics)(\[[a-zA-Z0-9\%\@\\=\,\s\.]*\])?\{((https?://)[a-zA-Z0-9\&\\%\@\?\/\.\-=]*)\}')  # noqa: E501
@@ -355,6 +381,7 @@ def initialize():
     latex = replace_rule(latex)
     latex = replace_emoji(latex)
     latex = replace_quote(latex)
+    latex = replace_unicode(latex)
     latex = replace_verbatim(latex)
     images = find_all_images(latex)
 
