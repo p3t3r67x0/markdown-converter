@@ -2,7 +2,6 @@
 # -*- encoding: utf-8 -*-
 
 import os
-import re
 import pathlib
 import argparse
 import svgwrite
@@ -12,25 +11,10 @@ from reportlab.graphics import renderPDF
 from svgpathtools import SaxDocument, svg2paths, wsvg
 from svgwrite.container import Group
 
-from utils.file_utils import read_file, file_name
-
-
-def replace_unicode():
-    cwd = pathlib.Path.cwd()
-
-    string = read_file('{}/output/README.md'.format(cwd))
-
-    pattern = re.compile(r'([^\x00-\x7F])')
-    output = re.findall(pattern, string)
-    print(output)
-
-    for i in output:
-        print('{:x}'.format(ord(i)).upper())
-
 
 def generate_pdf(source):
     cwd = pathlib.Path.cwd()
-    name = file_name(source)
+    name = os.path.splitext(os.path.basename(source))[0]
 
     target = os.path.join(
         '{}/fonts'.format(cwd),
@@ -130,11 +114,11 @@ def argparser():
     parser.add_argument('--pdf', action='store_true',
                         required=False, help='set flag for pdf generation')
     parser.add_argument('--input', dest='input',
-                        required=True, help='define input file')
+                        required=False, help='define input file')
     parser.add_argument('--output', dest='output',
-                        required=True, help='define output file_name')
+                        required=False, help='define output file_name')
     parser.add_argument('--format', dest='format',
-                        required=True, help='define input format')
+                        required=False, help='define input format')
 
     args = parser.parse_args()
 
@@ -144,7 +128,8 @@ def argparser():
 def main():
     args = argparser()
 
-    generate_pdf(args.input, args.output)
+    convert_font()
+    # generate_pdf(args.input, args.output)
 
 
 if __name__ == '__main__':
