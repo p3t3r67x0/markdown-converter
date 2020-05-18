@@ -7,7 +7,7 @@ import requests
 import logging
 
 from PIL import Image, UnidentifiedImageError
-from requests.exceptions import ConnectionError, HTTPError
+from requests.exceptions import ConnectionError, ReadTimeout, HTTPError
 from gi.repository.GLib import Error
 
 gi.require_version('Rsvg', '2.0')
@@ -20,11 +20,14 @@ logger = logging.getLogger('converter')
 
 
 def download(u):
-    res = requests.get(u, timeout=1)
+    res = requests.get(u, timeout=10)
 
     try:
         res.raise_for_status()
     except HTTPError as e:
+        logger.error(e)
+        return None
+    except ReadTimeout as e:
         logger.error(e)
         return None
     except ConnectionError as e:
