@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from module.converter import initialize
+from modules.converter import initialize
 
 
 def main():

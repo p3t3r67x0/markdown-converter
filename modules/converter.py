@@ -1,14 +1,8 @@
 #!/usr/bin/env python3
 
-import gi
-import os
 import re
-import math
 import emoji
-import cairo
-import pathlib
 import argparse
-import requests
 import subprocess
 import unicodedata
 import pypandoc
@@ -16,165 +10,19 @@ import logging
 import random
 import uuid
 
-from magic import from_file
-from PIL import Image, UnidentifiedImageError
-from requests.exceptions import ConnectionError, HTTPError
 from urllib.parse import urlparse, unquote
-from gi.repository.GLib import Error
 from string import ascii_lowercase
 
-gi.require_version('Rsvg', '2.0')
+from modules.utils.file_utils import (read_file, write_file, makedir,
+                                      file_name, file_extension, file_path,
+                                      file_type)
 
-from gi.repository import Rsvg  # noqa: E402
+from modules.utils.image_utils import (download, pixeltomm, image_dimensions,
+                                       convert_gif_image, convert_svg_image)
 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('converter')
-
-
-def read_file(p):
-    with open(p, 'r') as f:
-        return f.read()
-
-
-def write_file(p, t, i):
-    with open(p, t) as f:
-        f.write(i)
-
-
-def download(u):
-    res = requests.get(u)
-
-    try:
-        res.raise_for_status()
-    except HTTPError as e:
-        logger.error(e)
-        return None
-    except ConnectionError as e:
-        logger.error(e)
-        return None
-
-    return res.content
-
-
-def file_exists(p):
-    if os.path.isfile(p):
-        return True
-
-    return False
-
-
-def pixeltomm(p):
-    value = math.floor(p * 25.4) / 112
-
-    return value
-
-
-def makedir(p):
-    pathlib.Path(p).mkdir(parents=True, exist_ok=True)
-
-
-def file_name(p):
-    name = os.path.splitext(os.path.basename(p))[0]
-
-    return name
-
-
-def file_extension(p):
-    name = os.path.splitext(os.path.basename(p))[1]
-
-    return name
-
-
-def file_path(p):
-    cwd = pathlib.Path.cwd()
-    path = os.path.join(cwd, *p.split('/'))
-
-    return path
-
-
-def file_type(p):
-    type = from_file(p, mime=True)
-
-    return type
-
-
-def image_open(p):
-    try:
-        image = Image.open(p)
-    except FileNotFoundError as e:
-        logger.error(e)
-        return None
-    except UnidentifiedImageError as e:
-        logger.error(e)
-        return None
-
-    return image
-
-
-def image_dimensions(p):
-    image = image_open(p)
-    maxwidth = 782
-    maxheight = 567
-
-    if not image:
-        return None
-
-    width, height = image.size
-
-    if width >= maxwidth:
-        ratio = min(maxwidth / width, maxheight / height)
-        width = width * ratio
-        height = height * ratio
-
-    dimensions = [width, height]
-
-    return dimensions
-
-
-def convert_gif_image(p, o):
-    image = image_open(p)
-
-    if not image:
-        return None
-
-    logger.info('writing png file {}'.format(o))
-
-    if image.is_animated:
-        logger.info('gif image has {} animated frames'.format(image.n_frames))
-
-        image.seek(image.n_frames - 1)
-        image.save(o, 'PNG')
-    else:
-        image.save(o, 'PNG')
-
-    dimensions = image_dimensions(o)
-
-    return dimensions
-
-
-def convert_svg_image(p, o):
-    handle = Rsvg.Handle()
-
-    try:
-        svg = handle.new_from_file(p)
-    except Error as e:
-        logger.error(e)
-        return None
-
-    width = svg.props.width
-    height = svg.props.height
-
-    svg_surface = cairo.SVGSurface(None, width * 2, height * 2)
-    svg_context = cairo.Context(svg_surface)
-    svg_context.scale(2, 2)
-    svg.render_cairo(svg_context)
-    svg_surface.write_to_png(o)
-
-    dimensions = image_dimensions(o)
-    dimensions = [dimensions[0] / 2, dimensions[1] / 2]
-
-    return dimensions
 
 
 def argparser():
@@ -393,7 +241,7 @@ def iterate_image_strings(images, latex):
 
 
 def convert_latex(target):
-    subprocess.call('xelatex -interaction nonstopmode -output-directory {} {}'.format(
+    subprocess.call('xelatex -interaction nonstopmode -output-directory {} {}'.format(  # noqa: E501
         file_path('/output'), file_path('/output/{}.tex'.format(target))),
         shell=True)
 
@@ -473,9 +321,9 @@ def replace_emoji(latex):
             if not len(item) > 1:
                 unicodes.append(r'{:x}'.format(ord(char)).upper())
                 unicode_chars.add(
-                    r'\\def\\{1}{{\\scalerel*{{\\includegraphics{{./emojies/{0}.pdf}}}}{{0}}}}'.format('-'.join(unicodes), item_name))
+                    r'\\def\\{1}{{\\scalerel*{{\\includegraphics{{./emojies/{0}.pdf}}}}{{0}}}}'.format('-'.join(unicodes), item_name))  # noqa: E501
                 latex = re.sub(
-                    item, r'\\texorpdfstring{{\\large\\protect\\{0}}}{{}}'.format(item_name), latex)
+                    item, r'\\texorpdfstring{{\\large\\protect\\{0}}}{{}}'.format(item_name), latex)  # noqa: E501
 
     latex = re.sub(r'\\newunicodechar\{\}', '\n'.join(unicode_chars), latex)
 
