@@ -4,7 +4,6 @@ import re
 import emoji
 import argparse
 import subprocess
-import unicodedata
 import pypandoc
 import logging
 import random
@@ -321,15 +320,37 @@ def random_word():
     return word
 
 
+def _collect_emoji_chars():
+    emoji_chars = set()
+
+    emoji_data = getattr(emoji, 'EMOJI_DATA', None)
+    if isinstance(emoji_data, dict):
+        emoji_chars.update(emoji_data.keys())
+
+    alias_maps = [
+        getattr(emoji, attr, None)
+        for attr in (
+            'EMOJI_ALIAS_UNICODE_ENGLISH',
+            'EMOJI_ALIAS_UNICODE',
+            'EMOJI_UNICODE_ENGLISH',
+            'EMOJI_UNICODE',
+        )
+    ]
+
+    for mapping in alias_maps:
+        if isinstance(mapping, dict):
+            emoji_chars.update(mapping.values())
+
+    return sorted(emoji_chars, key=len, reverse=True)
+
+
 def replace_emoji(latex):
-    emoji_chars = emoji.EMOJI_ALIAS_UNICODE.values()
+    emoji_chars = _collect_emoji_chars()
+    if not emoji_chars:
+        return latex
+
     unicode_chars = set()
     emojies = []
-
-    def char_or_emoji(char):
-        if char in emoji_chars:
-            return unicodedata.name(char)
-        return char
 
     emoji_pattern = re.compile('|'.join(
         re.escape(u) for u in emoji_chars))
