@@ -13,14 +13,14 @@ jobs:
     - name: Setup System dependencies
       run: sudo apt install libgirepository1.0-dev
 
-    - name: Set up Python 3.8
+    - name: Set up Python 3.12
       uses: actions/setup-python@v1
       with:
-        python-version: 3.8
+        python-version: 3.12
 
     - name: Install dependencies
       run: |
-        sudo apt install python3.7 python3-pip python3-wheel
+        sudo apt install python3.12 python3-pip python3-wheel
         pip3 install flake8 pytest
         pip3 install -r requirements.txt
 
